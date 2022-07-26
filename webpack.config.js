@@ -7,6 +7,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "index.js",
+    publicPath: "/",
   },
   target: "web",
   devServer: {
@@ -15,6 +16,7 @@ module.exports = {
     open: true,
     hot: true,
     liveReload: true,
+    historyApiFallback: true,
   },
   resolve: {
     extensions: [".tsx", ".ts", ".jsx", ".js", ".json"],
@@ -32,7 +34,7 @@ module.exports = {
         use: ["babel-loader", "ts-loader"],
       },
       {
-        test: /\.(ico|svg)$/,
+        test: /\.ico$/,
         use: [
           {
             loader: "file-loader",
@@ -41,6 +43,10 @@ module.exports = {
             },
           },
         ],
+      },
+      {
+        test: /\.svg$/,
+        use: "@svgr/webpack",
       },
       {
         test: /\.css$/,
@@ -55,7 +61,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: "public/index.html",
-      favicon: "src/assets/globe.ico",
+      favicon: "src/assets/globe.svg",
     }),
   ],
 };
