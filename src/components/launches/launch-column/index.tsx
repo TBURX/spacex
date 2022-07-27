@@ -4,7 +4,7 @@ import * as React from "react";
 import { useDrop } from "react-dnd";
 import { useDispatch } from "react-redux";
 import { Launch } from "../../../model/types";
-import { sagas } from "../../../saga";
+import { sagaActions } from "../../../saga";
 import { DragTypes } from "../../../types";
 import LaunchCard from "./launch-card";
 import "./style.less";
@@ -31,10 +31,10 @@ const LaunchColumn: React.FC<ILaunchColumProps> = ({
     accept: dropTypes?.length ? dropTypes : "",
     drop: (item: Launch) => {
       if (dropTypes.includes(DragTypes.UPCOMING)) {
-        dispatch(sagas.reserve(item));
+        dispatch(sagaActions.reserve(item));
       }
       if (dropTypes.includes(DragTypes.RESERVED)) {
-        dispatch(sagas.unreserve(item));
+        dispatch(sagaActions.unreserveConfirm(item));
       }
     },
     collect: (monitor) => ({ isOver: monitor.isOver() }),

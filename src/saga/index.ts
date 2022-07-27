@@ -1,7 +1,14 @@
 import { Action, createAction, PayloadAction } from "@reduxjs/toolkit";
 import { Modal } from "antd";
 import { eventChannel } from "redux-saga";
-import { call, put, select, take, takeEvery } from "redux-saga/effects";
+import {
+  all,
+  call,
+  put,
+  select,
+  take,
+  takeEvery,
+} from "redux-saga/effects";
 import {
   getLaunches,
   getLaunchpads,
@@ -13,14 +20,17 @@ import { actions, selectors } from "../store/slice";
 
 const LOAD = "LOAD";
 const RESERVE = "RESERVE";
+const UNRESERVE_CONFIRM = "UNRESERVE_CONFIRM";
 const UNRESERVE = "UNRESERVE";
 const load = createAction(LOAD);
 const reserve = createAction<Launch>(RESERVE);
+const unreserveConfirm = createAction<Launch>(UNRESERVE_CONFIRM);
 const unreserve = createAction<Launch>(UNRESERVE);
 
-export const sagas = {
+export const sagaActions = {
   load,
   reserve,
+  unreserveConfirm,
   unreserve,
 };
 
@@ -43,15 +53,19 @@ function* reserveWorker({ payload }: PayloadAction<Launch>) {
 }
 
 function* unreserveWorker({ payload }: PayloadAction<Launch>) {
-  const channel = eventChannel<Action | Promise<any>>((emitter) => {
+  yield call(reserveBI, payload.id, false);
+  yield put(actions.setReserved({ id: payload.id, reserved: false }));
+  Modal.info({
+    content: `"${payload.name}" reservation succesfully cancelled`,
+  });
+}
+
+function* unreserveConfirmWorker({ payload }: PayloadAction<Launch>) {
+  const channel = eventChannel<Action>((emitter) => {
     Modal.confirm({
       content: `are you sure you want to cancel "${payload.name}" reservation?`,
       onOk: () => {
-        reserveBI(payload.id, false);
-        emitter(actions.setReserved({ id: payload.id, reserved: false }));
-        Modal.info({
-          content: `"${payload.name}" reservation succesfully cancelled`,
-        });
+        emitter(unreserve(payload));
       },
     });
     return () => {};
@@ -66,4 +80,5 @@ export function* watcher() {
   yield takeEvery(LOAD, loadWorker);
   yield takeEvery(RESERVE, reserveWorker);
   yield takeEvery(UNRESERVE, unreserveWorker);
+  yield takeEvery(UNRESERVE_CONFIRM, unreserveConfirmWorker);
 }
