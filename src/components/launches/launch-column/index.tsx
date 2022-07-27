@@ -31,7 +31,7 @@ const LaunchColumn: React.FC<ILaunchColumProps> = ({
     accept: dropTypes?.length ? dropTypes : "",
     drop: (item: Launch) => {
       if (dropTypes.includes(DragTypes.UPCOMING)) {
-        dispatch(sagaActions.reserve(item));
+        dispatch(sagaActions.reserve({ launch: item, isReserved: true }));
       }
       if (dropTypes.includes(DragTypes.RESERVED)) {
         dispatch(sagaActions.unreserveConfirm(item));

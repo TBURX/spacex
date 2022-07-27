@@ -1,14 +1,7 @@
 import { Action, createAction, PayloadAction } from "@reduxjs/toolkit";
 import { Modal } from "antd";
 import { eventChannel } from "redux-saga";
-import {
-  all,
-  call,
-  put,
-  select,
-  take,
-  takeEvery,
-} from "redux-saga/effects";
+import { call, put, select, take, takeEvery } from "redux-saga/effects";
 import {
   getLaunches,
   getLaunchpads,
@@ -21,17 +14,15 @@ import { actions, selectors } from "../store/slice";
 const LOAD = "LOAD";
 const RESERVE = "RESERVE";
 const UNRESERVE_CONFIRM = "UNRESERVE_CONFIRM";
-const UNRESERVE = "UNRESERVE";
+
 const load = createAction(LOAD);
-const reserve = createAction<Launch>(RESERVE);
+const reserve = createAction<{ launch: Launch; isReserved: boolean }>(RESERVE);
 const unreserveConfirm = createAction<Launch>(UNRESERVE_CONFIRM);
-const unreserve = createAction<Launch>(UNRESERVE);
 
 export const sagaActions = {
   load,
   reserve,
   unreserveConfirm,
-  unreserve,
 };
 
 function* loadWorker() {
@@ -46,18 +37,16 @@ function* loadWorker() {
   yield put(actions.setLoaded(true));
 }
 
-function* reserveWorker({ payload }: PayloadAction<Launch>) {
-  yield call(reserveBI, payload.id, true);
-  yield put(actions.setReserved({ id: payload.id, reserved: true }));
-  Modal.info({ content: `"${payload.name}" succesfully reserved` });
-}
-
-function* unreserveWorker({ payload }: PayloadAction<Launch>) {
-  yield call(reserveBI, payload.id, false);
-  yield put(actions.setReserved({ id: payload.id, reserved: false }));
-  Modal.info({
-    content: `"${payload.name}" reservation succesfully cancelled`,
-  });
+function* reserveWorker({
+  payload,
+}: PayloadAction<{ launch: Launch; isReserved: boolean }>) {
+  const { launch, isReserved } = payload;
+  yield call(reserveBI, launch.id, isReserved);
+  yield put(actions.setReserved({ id: launch.id, reserved: isReserved }));
+  const content = isReserved
+    ? `"${launch.name}" succesfully reserved`
+    : `"${launch.name}" reservation succesfully cancelled`;
+  Modal.info({ content });
 }
 
 function* unreserveConfirmWorker({ payload }: PayloadAction<Launch>) {
@@ -65,7 +54,7 @@ function* unreserveConfirmWorker({ payload }: PayloadAction<Launch>) {
     Modal.confirm({
       content: `are you sure you want to cancel "${payload.name}" reservation?`,
       onOk: () => {
-        emitter(unreserve(payload));
+        emitter(reserve({ launch: payload, isReserved: false }));
       },
     });
     return () => {};
@@ -79,6 +68,5 @@ function* unreserveConfirmWorker({ payload }: PayloadAction<Launch>) {
 export function* watcher() {
   yield takeEvery(LOAD, loadWorker);
   yield takeEvery(RESERVE, reserveWorker);
-  yield takeEvery(UNRESERVE, unreserveWorker);
   yield takeEvery(UNRESERVE_CONFIRM, unreserveConfirmWorker);
 }
