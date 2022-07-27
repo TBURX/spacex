@@ -2,12 +2,7 @@ import { Action, createAction, PayloadAction } from "@reduxjs/toolkit";
 import { Modal } from "antd";
 import { eventChannel } from "redux-saga";
 import { call, put, select, take, takeEvery } from "redux-saga/effects";
-import {
-  getLaunches,
-  getLaunchpads,
-  getRockets,
-  reserve as reserveBI,
-} from "../bi";
+import * as bi from "../bi";
 import { Launch, Launchpad, Rocket } from "../model/types";
 import { actions, selectors } from "../store/slice";
 
@@ -28,11 +23,11 @@ export const sagaActions = {
 function* loadWorker() {
   const loaded: boolean = yield select(selectors.loaded);
   if (loaded) return;
-  const launches: Launch[] = yield call(getLaunches);
+  const launches: Launch[] = yield call(bi.getLaunches);
   yield put(actions.addLaunches(launches));
-  const rockets: Rocket[] = yield call(getRockets);
+  const rockets: Rocket[] = yield call(bi.getRockets);
   yield put(actions.addRockets(rockets));
-  const launchpads: Launchpad[] = yield call(getLaunchpads);
+  const launchpads: Launchpad[] = yield call(bi.getLaunchpads);
   yield put(actions.addLaunchpads(launchpads));
   yield put(actions.setLoaded(true));
 }
@@ -41,7 +36,7 @@ function* reserveWorker({
   payload,
 }: PayloadAction<{ launch: Launch; isReserved: boolean }>) {
   const { launch, isReserved } = payload;
-  yield call(reserveBI, launch.id, isReserved);
+  yield call(bi.reserve, launch.id, isReserved);
   yield put(actions.setReserved({ id: launch.id, reserved: isReserved }));
   const content = isReserved
     ? `"${launch.name}" succesfully reserved`
