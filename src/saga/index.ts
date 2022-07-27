@@ -59,10 +59,8 @@ function* unreserveConfirmWorker({ payload }: PayloadAction<Launch>) {
     });
     return () => {};
   });
-  while (true) {
-    const action: Action = yield take(channel);
-    yield put(action);
-  }
+  const action: Action = yield take(channel);
+  yield put(action);
 }
 
 export function* watcher() {
