@@ -22,7 +22,7 @@ const Title: React.FC<ITitleProps> = ({ homeButton }) => {
             <HomeFilled />
           </Button>
         )}
-        Explore the space
+        Explore the spaceX
         <GlobeIcon />
       </Space>
     </Typography.Title>
